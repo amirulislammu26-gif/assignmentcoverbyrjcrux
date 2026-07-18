@@ -108,6 +108,9 @@
     gap:10px;
     margin-top:6px;
   }
+  .btnbar + .btnbar{
+    margin-top:10px;
+  }
   button{
     font-family:inherit;
     cursor:pointer;
@@ -119,13 +122,24 @@
     transition:transform .1s, opacity .15s;
   }
   button:active{transform:scale(.97);}
+  button:disabled{
+    opacity:.6;
+    cursor:wait;
+  }
   #printBtn{
     flex:1;
     background:var(--red);
     color:#fff;
   }
   #printBtn:hover{opacity:.92;}
+  #jpgBtn{
+    flex:1;
+    background:var(--navy);
+    color:#fff;
+  }
+  #jpgBtn:hover{opacity:.92;}
   #resetBtn{
+    flex:1;
     background:transparent;
     color:#c7cbef;
     border:1px solid #3a3e78;
@@ -300,11 +314,11 @@
   <!-- FORM PANEL -->
   <div class="panel">
     <h1>Assignment Cover Page</h1>
-    <div class="sub">Fill in your details below — the preview on the right updates live. When it looks right, hit Print / Save as PDF.</div>
+    <div class="sub">Fill in your details below — the preview on the right updates live. When it looks right, hit Print / Save as PDF, or Save as JPG.</div>
 
     <div class="field">
       <label for="assignmentTitle">Assignment Title</label>
-      <input id="assignmentTitle" placeholder="e.g. Impact of Microfinance on Rural Development" />
+      <input id="assignmentTitle" placeholder="e.g. C Programming />
     </div>
 
     <div class="field">
@@ -349,6 +363,9 @@
 
     <div class="btnbar">
       <button id="printBtn">Print / Save as PDF</button>
+    </div>
+    <div class="btnbar">
+      <button id="jpgBtn">Save as JPG</button>
       <button id="resetBtn">Reset</button>
     </div>
 
@@ -411,6 +428,7 @@
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   const ids = ['assignmentTitle','courseTitle','courseCode','faculty','studentName','batchSection','studentId','submissionDate'];
   const els = {};
@@ -507,6 +525,38 @@
   window.addEventListener('resize', updateScale);
   window.addEventListener('load', updateScale);
   updateScale();
+
+  // ---- Save as JPG ----
+  const jpgBtn = document.getElementById('jpgBtn');
+  jpgBtn.addEventListener('click', async () => {
+    const originalLabel = jpgBtn.textContent;
+    jpgBtn.disabled = true;
+    jpgBtn.textContent = 'Generating…';
+
+    // reset any mobile scaling so we capture the page at true, full size
+    const prevTransform = pageEl.style.transform;
+    pageEl.style.transform = 'none';
+
+    try{
+      const canvas = await html2canvas(pageEl, {
+        scale: 3,
+        backgroundColor: '#ffffff',
+        useCORS: true
+      });
+      const link = document.createElement('a');
+      const name = (els.studentName.value.trim() || 'assignment_cover').replace(/\s+/g,'_');
+      link.download = name + '.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    }catch(err){
+      alert('Could not generate the JPG. Please try again.');
+      console.error(err);
+    }finally{
+      pageEl.style.transform = prevTransform;
+      jpgBtn.disabled = false;
+      jpgBtn.textContent = originalLabel;
+    }
+  });
 </script>
 </body>
 </html>
